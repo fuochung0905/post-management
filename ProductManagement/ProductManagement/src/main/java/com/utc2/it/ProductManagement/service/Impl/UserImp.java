@@ -2,78 +2,78 @@ package com.utc2.it.ProductManagement.service.Impl;
 
 import com.utc2.it.ProductManagement.dto.UserDto;
 import com.utc2.it.ProductManagement.entity.User;
+import com.utc2.it.ProductManagement.entity.VerificationToken;
 import com.utc2.it.ProductManagement.exception.ResourceNotFoundException;
+import com.utc2.it.ProductManagement.exception.UserAlreadExitsException;
 import com.utc2.it.ProductManagement.repository.UserRepository;
+import com.utc2.it.ProductManagement.repository.VerificationTokenRepository;
 import com.utc2.it.ProductManagement.service.UserService;
+import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.Calendar;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class UserImp implements UserService {
 
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private ModelMapper modelMapper;
+    private final UserRepository userRepository;
+    private final ModelMapper modelMapper;
+    private final PasswordEncoder passwordEncoder;
+    private final VerificationTokenRepository verificationTokenRepository;
 
     @Override
-    public UserDto createUser(UserDto userDto) {
-        User user=this.dtoToUser(userDto);
-        User saveUser=this.userRepository.save(user);
-        return this.userToUserDto(saveUser);
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(email);
     }
 
     @Override
-    public UserDto updateUser(UserDto userDto, Integer UserId) {
-        User user = this.userRepository.findById(UserId).orElseThrow(()->new ResourceNotFoundException("User"," id",UserId ));
-        user.setName(userDto.getName());
-        user.setEmail(userDto.getEmail());
-        user.setPassword(userDto.getPassword());
-        user.setAbout(userDto.getAbout());
-        User updateUser= this.userRepository.save(user);
-        return this.userToUserDto(updateUser);
+    public User registerUser(UserDto userDto) {
+        Optional<User>findUser=this.findByEmail(userDto.email());
+            if(findUser.isPresent()){
+            throw new UserAlreadExitsException("User with email" +userDto.email()+" already exists");
+        }
+        var newuser= new User();
+        newuser.setName(userDto.name());
+        newuser.setEmail(userDto.email());
+        newuser.setPassword(passwordEncoder.encode(userDto.password()));
+
+        newuser.setRole(userDto.role());
+
+        return this.userRepository.save(newuser);
+    }
+
+
+    @Override
+    public void saveUserVerificationToken(User user, String Token) {
+        User theUser=this.modelMapper.map(user,User.class);
+        var verificationToken= new VerificationToken(Token,theUser);
+        verificationTokenRepository.save(verificationToken);
     }
 
     @Override
-    public UserDto getUserById(Integer userId) {
-        User user=this.userRepository.findById(userId).orElseThrow(()->new ResourceNotFoundException("User","Id",userId));
-        return this.userToUserDto(user);
-    }
-
-    @Override
-    public List<UserDto> getAllUser() {
-        List<User>users=this.userRepository.findAll();
-        List<UserDto> userDtos=users.stream().map(user -> this.userToUserDto(user)).collect(Collectors.toList());
-        return userDtos;
-    }
-
-    @Override
-    public void deleteUser(Integer userId) {
-        User user=this.userRepository.findById(userId).orElseThrow(()->new ResourceNotFoundException("User","id",userId));
-        this.userRepository.delete(user);
+    public String validateToken(String token) {
+        VerificationToken verificationToken=this.verificationTokenRepository.findByToken(token);
+       if(token==null){
+           return "Invalid verification token";
+       }
+       User user=verificationToken.getUser();
+        Calendar calendar=Calendar.getInstance();
+        if((verificationToken.getExpirationTime().getTime()-calendar.getTime().getTime()<=0)){
+            this.verificationTokenRepository.delete(verificationToken);
+            return "Token already expired ";
+        }
+        user.setEnable(true);
+        userRepository.save(user);
+        return "valid";
 
     }
-    private User dtoToUser(UserDto userDto){
-        User user= this.modelMapper.map(userDto,User.class);
-//        User user= new User();
-//        user.setId(userDto.getId());
-//        user.setName(userDto.getName());
-//        user.setEmail(userDto.getEmail());
-//        user.setPassword(userDto.getPassword());
-//        user.setAbout(userDto.getAbout());
-        return user;
-    }
-    private UserDto userToUserDto(User user){
-        UserDto userDto=this.modelMapper.map(user,UserDto.class);
-//        UserDto userDto= new UserDto();
-//        userDto.setId(user.getId());
-//        userDto.setName(user.getName());
-//        userDto.setEmail(user.getEmail());
-//        userDto.setPassword(user.getPassword());
-//        userDto.setAbout(user.getAbout());
-        return userDto;
-    }
+
+
 }

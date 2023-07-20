@@ -27,8 +27,13 @@ public class User {
     private String email;
 
     private String password;
+    private String role;
+    private boolean isEnable;
 
     private String about;
     @OneToMany(mappedBy = "user",cascade = CascadeType.ALL,fetch = FetchType.LAZY)
     List<Post>posts= new ArrayList<>();
+    public boolean getIsEnable(){
+        return this.isEnable;
+    }
 }
