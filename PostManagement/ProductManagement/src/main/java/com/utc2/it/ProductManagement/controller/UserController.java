@@ -1,6 +1,8 @@
 package com.utc2.it.ProductManagement.controller;
 
 
+import com.utc2.it.ProductManagement.dto.LoginResponse;
+import com.utc2.it.ProductManagement.dto.SignInRequest;
 import com.utc2.it.ProductManagement.dto.UserDto;
 import com.utc2.it.ProductManagement.entity.User;
 import com.utc2.it.ProductManagement.entity.VerificationToken;
@@ -8,11 +10,18 @@ import com.utc2.it.ProductManagement.event.RegistrationCompleteEvent;
 import com.utc2.it.ProductManagement.repository.VerificationTokenRepository;
 import com.utc2.it.ProductManagement.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.json.JSONException;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
+
 @RestController
-@RequestMapping("/register")
+@RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 public class UserController {
 
@@ -21,12 +30,17 @@ public class UserController {
     private final VerificationTokenRepository verificationTokenRepository;
 
     // register account
-    @PostMapping()
+    @PostMapping("/register")
     public String creatUser( @RequestBody UserDto userDto, final HttpServletRequest request){
         User createUserDto= this.userService.registerUser(userDto);
         publisher
                 .publishEvent(new RegistrationCompleteEvent(createUserDto,applicationUrl(request)));
         return "Success! Please check email for to complete your registration";
+    }
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(@RequestBody SignInRequest request)  {
+     LoginResponse response=userService.signin(request);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
     @GetMapping("/verifyEmail")
     public String verifyEmail(@RequestParam("token")String token){

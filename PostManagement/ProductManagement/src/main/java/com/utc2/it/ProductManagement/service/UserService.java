@@ -1,13 +1,19 @@
 package com.utc2.it.ProductManagement.service;
 
+import com.utc2.it.ProductManagement.dto.LoginResponse;
+import com.utc2.it.ProductManagement.dto.SignInRequest;
 import com.utc2.it.ProductManagement.dto.UserDto;
 import com.utc2.it.ProductManagement.entity.User;
+import jakarta.servlet.http.HttpServletResponse;
+import org.json.JSONException;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
 public interface UserService {
-    Optional<User>findByEmail(String email);
+    User findByEmail(String email);
+    LoginResponse signin(SignInRequest request) ;
     User registerUser(UserDto userDto);
 
 //    UserDto updateUser(UserDto userDto , Integer UserId);

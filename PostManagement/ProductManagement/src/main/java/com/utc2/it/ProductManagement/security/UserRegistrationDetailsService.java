@@ -13,7 +13,7 @@ public class UserRegistrationDetailsService implements UserDetailsService {
     private final UserRepository userRepository;
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        return this.userRepository.findByEmail(email)
+        return this.userRepository.findUserByEmail(email)
                 .map(UserRegistrationDetail::new)
                 .orElseThrow(()->new UsernameNotFoundException("User not found"));
     }

@@ -2,7 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/ProductManagement.iml" filepath="$PROJECT_DIR$/.idea/ProductManagement.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/PostManagement.iml" filepath="$PROJECT_DIR$/.idea/PostManagement.iml" />
+      <module fileurl="file://$PROJECT_DIR$/ProductManagement/ProductManagement.iml" filepath="$PROJECT_DIR$/ProductManagement/ProductManagement.iml" />
     </modules>
   </component>
 </project>
